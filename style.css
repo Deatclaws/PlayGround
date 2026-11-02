@@ -2,3 +2,16 @@
 @media(max-width:1100px){.game-layout{grid-template-columns:220px minmax(390px,1fr)}.right-rail{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr 1fr}.tower-card,.journal-card{min-height:190px}.quote-card{align-self:stretch}.hero-panel{grid-row:span 1}}
 @media(max-width:720px){.app{padding:17px 14px calc(22px + env(safe-area-inset-bottom))}.topbar{margin-bottom:19px}.intro{margin-bottom:17px}.intro h1{font-size:29px}.intro p{max-width:270px;line-height:1.6}.run-stats{font-size:8px}.game-layout{display:flex;flex-direction:column;gap:12px}.battle-panel{order:1;padding:15px 13px 12px}.hero-panel{order:2}.right-rail{order:3;display:grid;grid-template-columns:1fr 1fr;gap:10px}.quote-card{grid-column:1/-1}.hero-panel{padding:15px}.hero-art{height:135px;margin:12px -2px}.arena{height:215px}.battle-heading h2{font-size:19px}.turn-badge{font-size:7px}.actions{gap:6px}.action-card{padding:6px;gap:6px}.action-copy strong{font-size:9px}.action-copy small{font-size:7px}.action-icon{width:25px;height:25px}.action-cost{font-size:7px}.action-head{font-size:8px}.right-rail .tower-card,.right-rail .journal-card{padding:14px 12px;min-height:175px}.tower-note{font-size:8px}.journal-item{gap:6px}.journal-item strong{font-size:8px}.quote-card{padding:13px 14px}footer{flex-wrap:wrap;gap:10px;font-size:7px}footer button{order:3;width:100%;padding:8px}.shop-modal{padding:20px}.modal-backdrop{align-items:center}}
 @media(max-width:380px){.app{padding-left:10px;padding-right:10px}.intro h1{font-size:26px}.run-stats{max-width:100px}.top-pill{padding:7px 8px}.battle-panel{padding-left:10px;padding-right:10px}.action-copy small{white-space:normal}.actions{grid-template-columns:1fr 1fr}.right-rail{grid-template-columns:1fr}.quote-card{grid-column:auto}.action-card{min-height:53px}}
+
+/* Keep the player's resources beside the encounter and make tall dialogs scroll on touch screens. */
+.combat-vitals{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 13px;padding:10px 12px;border:1px solid #34394b;border-radius:7px;background:#151925}
+.combat-vitals .vitals{margin:0;min-width:0}
+.combat-vitals .vital-head{font-size:9px}
+.modal-backdrop{overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;align-items:start;padding:18px max(18px,env(safe-area-inset-right)) 18px max(18px,env(safe-area-inset-left))}
+.shop-modal,.over-modal{max-height:calc(100vh - 36px);max-height:calc(100dvh - 36px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;margin:auto}
+@media(max-width:720px){
+  .combat-vitals{gap:9px;margin-bottom:11px;padding:9px 10px}
+  .combat-vitals .vital-head{font-size:8px;letter-spacing:.03em}
+  .modal-backdrop{padding-top:max(12px,env(safe-area-inset-top));padding-bottom:max(12px,env(safe-area-inset-bottom))}
+  .shop-modal,.over-modal{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px)}
+}

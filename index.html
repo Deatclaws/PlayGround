@@ -22,13 +22,15 @@
         <div class="panel-kicker">YOUR ADVENTURER <span class="level-badge" id="level">LVL 01</span></div>
         <div class="hero-art"><div class="art-glow"></div><div class="hero-sigil">✦</div><div class="hero-figure"><div class="hero-head"></div><div class="hero-cape"></div><div class="hero-body"></div><div class="hero-blade">╱</div></div><div class="art-caption">THE WAYFARER</div></div>
         <div class="hero-name-row"><div><h2>Arden Vale</h2><span class="hero-class">Wandering Knight</span></div><span class="class-icon">⚔</span></div>
-        <div class="vitals"><div class="vital-head"><span>❤️ VITALITY</span><strong id="hpText">100 / 100</strong></div><div class="bar"><div class="bar-fill hp-fill" id="hpBar"></div></div></div>
-        <div class="vitals mana-vital"><div class="vital-head"><span>✦ FOCUS</span><strong id="mpText">40 / 40</strong></div><div class="bar"><div class="bar-fill mp-fill" id="mpBar"></div></div></div>
         <div class="hero-details"><div><span>POWER</span><strong id="powerText">12</strong></div><div><span>ARMOR</span><strong id="armorText">0</strong></div><div><span>XP</span><strong id="xpText">0 / 40</strong></div></div>
         <div class="inventory"><div class="inventory-title">PACK <span>CONSUMABLES</span></div><div class="item-row"><span class="item-icon potion">♜</span><span>Health potion</span><strong id="potionCount">× 3</strong></div><div class="item-row"><span class="item-icon ether">✧</span><span>Focus tonic</span><strong id="etherCount">× 1</strong></div></div>
       </aside>
       <section class="battle-panel panel">
         <div class="battle-heading"><div><div class="panel-kicker" id="phaseLabel">FLOOR 01 · ENCOUNTER</div><h2 id="battleTitle">A shadow stirs...</h2></div><div class="turn-badge" id="turnBadge"><span class="turn-dot"></span> YOUR TURN</div></div>
+        <div class="combat-vitals" aria-label="Your health and focus">
+          <div class="vitals"><div class="vital-head"><span>❤️ VITALITY</span><strong id="hpText">100 / 100</strong></div><div class="bar"><div class="bar-fill hp-fill" id="hpBar"></div></div></div>
+          <div class="vitals mana-vital"><div class="vital-head"><span>✦ FOCUS</span><strong id="mpText">40 / 40</strong></div><div class="bar"><div class="bar-fill mp-fill" id="mpBar"></div></div></div>
+        </div>
         <div class="arena" id="arena"><div class="arena-vignette"></div><div class="moon"></div><div class="spire spire-back">◆</div><div class="spire spire-mid">◆</div><div class="spire spire-front">◆</div><div class="arena-floor"></div><div class="enemy-wrap" id="enemyWrap"><div class="enemy-aura"></div><div class="enemy-emoji" id="enemyEmoji">👾</div><div class="enemy-shadow"></div></div><div class="arena-label"><span class="enemy-tag"><i></i><span id="enemyName">Cinder Wisp</span></span><span id="enemyRank">FLOOR GUARDIAN</span></div><div class="float-layer" id="floatLayer"></div></div>
         <div class="enemy-vitals"><div class="enemy-vital-head"><span id="enemyTitle">CINDER WISP</span><strong id="enemyHpText">48 / 48</strong></div><div class="bar enemy-bar"><div class="bar-fill enemy-fill" id="enemyHpBar"></div></div></div>
         <div class="intent-row" id="intentRow"><span class="intent-icon">⚠</span><span id="intentText">The wisp gathers heat...</span><span class="intent-label">ENEMY INTENT</span></div>
