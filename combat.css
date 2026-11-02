@@ -1,0 +1,415 @@
+/* Combat scene and command menu */
+.arena {
+  isolation: isolate;
+  height: 430px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 74% 69%, #754a4b55 0, transparent 34%),
+    radial-gradient(ellipse at 24% 68%, #5e526333 0, transparent 34%),
+    radial-gradient(ellipse at 50% 25%, #343044 0, #242336 48%, #151923 100%);
+}
+.arena::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 42%;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, #11131dc9 83%);
+}
+.arena-vignette { z-index: 0; }
+.arena-floor { z-index: 1; bottom: -48px; height: 145px; }
+.moon { right: 16%; top: 34px; width: 62px; height: 62px; }
+.spire { z-index: 0; }
+.spire-back { left: 8%; top: 26px; }
+.spire-mid { right: 4%; top: 22px; }
+.spire-front { left: 40%; top: 12px; }
+
+.enemy-wrap {
+  z-index: 2;
+  left: 71%;
+  top: 44px;
+  width: 170px;
+  height: 190px;
+}
+.enemy-wrap.boss { transform: translateX(-50%) scale(1.13); }
+.enemy-emoji { font-size: 94px; }
+.enemy-shadow { bottom: 4px; width: 104px; }
+.arena-label {
+  z-index: 4;
+  left: 14px;
+  right: 14px;
+  top: 12px;
+  bottom: auto;
+}
+.enemy-tag { text-shadow: 0 2px 6px #000; }
+
+.player-combatant {
+  --hero-cloak: #6b3e40;
+  --hero-armor: #b69a75;
+  position: absolute;
+  z-index: 3;
+  left: 25%;
+  bottom: 126px;
+  width: 106px;
+  height: 194px;
+  transform: translateX(-50%);
+  transform-origin: 50% 85%;
+  filter: drop-shadow(0 8px 8px #0008);
+}
+.player-aura {
+  position: absolute;
+  width: 126px;
+  height: 126px;
+  left: 50%;
+  top: 30px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: #e8bc7218;
+  filter: blur(13px);
+  animation: playerAura 3s ease-in-out infinite;
+}
+.player-figure { position: absolute; inset: 0; }
+.player-head {
+  position: absolute;
+  z-index: 3;
+  top: 15px;
+  left: 40px;
+  width: 27px;
+  height: 33px;
+  border: 1px solid #e8c9a477;
+  border-radius: 46% 46% 38% 38%;
+  background: linear-gradient(100deg, #73554d, #e0b991 50%, #9c7668);
+  box-shadow: inset -4px 0 #533f42;
+}
+.player-head::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 20px;
+  width: 13px;
+  height: 3px;
+  border-radius: 4px;
+  background: #181a26;
+}
+.player-cape {
+  position: absolute;
+  z-index: 1;
+  top: 43px;
+  left: 12px;
+  width: 82px;
+  height: 117px;
+  background: linear-gradient(100deg, #382d3a, var(--hero-cloak) 50%, #29232f);
+  clip-path: polygon(25% 0, 75% 0, 100% 100%, 0 100%);
+  filter: drop-shadow(0 0 8px #0008);
+}
+.player-body {
+  position: absolute;
+  z-index: 2;
+  top: 48px;
+  left: 29px;
+  width: 49px;
+  height: 75px;
+  border: 1px solid #e1c18b88;
+  background: linear-gradient(90deg, #51424a, var(--hero-armor) 48%, #55444a);
+  clip-path: polygon(20% 0, 80% 0, 100% 100%, 0 100%);
+}
+.player-body::after {
+  content: "";
+  position: absolute;
+  left: 20px;
+  top: 4px;
+  width: 7px;
+  height: 63px;
+  background: #edcc8f88;
+  clip-path: polygon(50% 0, 100% 35%, 50% 100%, 0 35%);
+}
+.player-weapon {
+  position: absolute;
+  z-index: 4;
+  top: 42px;
+  left: 76px;
+  width: 8px;
+  height: 76px;
+  border: 1px solid #f5e6c6;
+  border-radius: 4px 4px 1px 1px;
+  background: linear-gradient(90deg, #777f91, #fff4d8 55%, #9aa8b8);
+  transform: rotate(20deg);
+  transform-origin: 50% 90%;
+  box-shadow: 0 0 9px #e6d9bb66;
+}
+.player-weapon::after {
+  content: "";
+  position: absolute;
+  width: 19px;
+  height: 5px;
+  left: -7px;
+  bottom: 8px;
+  border-radius: 3px;
+  background: #b58b53;
+}
+.player-shadow {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  bottom: 0;
+  height: 18px;
+  border-radius: 50%;
+  background: #08090dcc;
+  filter: blur(5px);
+}
+.player-combatant[data-class="knight"] { --hero-cloak: #684448; --hero-armor: #c4a878; }
+.player-combatant[data-class="mage"] { --hero-cloak: #51416e; --hero-armor: #9c7bc8; }
+.player-combatant[data-class="mage"] .player-weapon {
+  width: 6px;
+  height: 94px;
+  left: 79px;
+  top: 37px;
+  border: 0;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #684e8e, #d8c0ff, #765a9b);
+  transform: rotate(8deg);
+}
+.player-combatant[data-class="mage"] .player-weapon::after {
+  width: 20px;
+  height: 20px;
+  left: -7px;
+  bottom: auto;
+  top: -10px;
+  border: 2px solid #eadbff;
+  border-radius: 50%;
+  background: #b58fea;
+  box-shadow: 0 0 16px #b58fea;
+}
+.player-combatant[data-class="archer"] { --hero-cloak: #385b4c; --hero-armor: #879d70; }
+.player-combatant[data-class="archer"] .player-weapon {
+  width: 7px;
+  height: 69px;
+  left: 78px;
+  top: 48px;
+  border: 2px solid #c8a46c;
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  background: transparent;
+  transform: rotate(-17deg);
+  box-shadow: none;
+}
+.player-combatant[data-class="archer"] .player-weapon::after {
+  width: 1px;
+  height: 69px;
+  left: 1px;
+  bottom: -2px;
+  border-radius: 0;
+  background: #e9d8b7;
+}
+body[data-hero-class="mage"] .hero-art .hero-cape { background: linear-gradient(100deg, #392d4f, #735b8a 50%, #342b43); }
+body[data-hero-class="archer"] .hero-art .hero-cape { background: linear-gradient(100deg, #30483d, #65775a 50%, #293a33); }
+body[data-hero-class="mage"] .hero-art .hero-blade { color: #d3b8f5; }
+body[data-hero-class="archer"] .hero-art .hero-blade { color: #c4aa78; }
+
+.battle-menu {
+  position: absolute;
+  z-index: 6;
+  right: 12px;
+  bottom: 12px;
+  width: min(57%, 430px);
+  max-height: 51%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 9px;
+  border: 1px solid #95815a88;
+  border-radius: 8px;
+  background: linear-gradient(145deg, #171a26f2, #11141fee);
+  box-shadow: 0 8px 28px #08091088, inset 0 1px #ffffff12;
+  scrollbar-color: #64553d #171a26;
+  scrollbar-width: thin;
+}
+.command-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+.command-tab {
+  min-width: 0;
+  padding: 7px 4px;
+  border: 1px solid #393b4a;
+  border-radius: 5px;
+  background: #202332;
+  color: #b9bbc6;
+  font: 9px 'DM Mono', monospace;
+  cursor: pointer;
+  transition: color .15s, background .15s, border-color .15s;
+}
+.command-tab:hover { border-color: #867451; color: #f0dfc0; }
+.command-tab.active {
+  border-color: #9b8052;
+  background: linear-gradient(120deg, #55432e, #342c2b);
+  color: #f3d9a4;
+  box-shadow: inset 0 1px #ffffff16;
+}
+.battle-menu .action-head { margin: 8px 2px 6px; }
+.battle-menu .actions { grid-template-columns: 1fr; gap: 5px; }
+.battle-menu .action-card { min-height: 43px; padding: 6px 8px; }
+.battle-menu .action-icon { width: 27px; height: 27px; }
+.battle-menu .action-copy strong { font-size: 9px; }
+.battle-menu .action-copy small { font-size: 7px; }
+.battle-menu .action-cost { font-size: 8px; }
+.battle-menu [hidden] { display: none !important; }
+.float-layer { z-index: 7; }
+.float-text { z-index: 8; }
+.float-text.player { left: 24%; top: 47%; }
+
+/* The class picker is the first screen of each run. */
+.class-select-backdrop { z-index: 30; }
+.class-select {
+  width: min(100%, 760px);
+  margin: auto;
+  padding: 30px;
+  border-color: #5c5145;
+  background:
+    radial-gradient(ellipse at 50% 0, #49384777, transparent 55%),
+    linear-gradient(145deg, #20202d, #171a27 70%);
+  box-shadow: 0 24px 90px #05060bcc, inset 0 1px #ffffff12;
+  text-align: center;
+}
+.class-select > .panel-kicker { color: #d1b27b; }
+.class-select h2 {
+  margin: 8px 0 5px;
+  font: 700 30px 'Playfair Display', serif;
+  color: #f3e5ce;
+}
+.class-select > p { margin: 0 auto 22px; color: #a9a9b5; font-size: 12px; }
+.class-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 11px; }
+.class-option {
+  display: flex;
+  min-width: 0;
+  min-height: 184px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 17px 12px;
+  border: 1px solid #3b3d4c;
+  border-radius: 8px;
+  background: linear-gradient(155deg, #242737, #1a1d2a);
+  cursor: pointer;
+  transition: transform .18s, border-color .18s, background .18s, box-shadow .18s;
+}
+.class-option:hover {
+  transform: translateY(-3px);
+  border-color: #9b8052;
+  background: linear-gradient(155deg, #302d35, #1d202d);
+  box-shadow: 0 10px 24px #08091066;
+}
+.class-option:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.choice-icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  margin-bottom: 10px;
+  border: 1px solid #816b4e;
+  border-radius: 50%;
+  background: #302b32;
+  color: #e8bc72;
+  font-size: 22px;
+}
+.class-option strong { font: 700 18px 'Playfair Display', serif; color: #f2e5d1; }
+.class-option small { margin-top: 6px; color: #a9adbb; font-size: 9px; line-height: 1.5; }
+.choice-skills { margin-top: 13px; color: #d7bd8e; font: 8px 'DM Mono', monospace; line-height: 1.5; }
+.mage-option .choice-icon { color: #c3a2f1; border-color: #625480; background: #302b42; }
+.mage-option:hover { border-color: #9d83cb; }
+.mage-option .choice-skills { color: #c4a6ec; }
+.archer-option .choice-icon { color: #8cd3a0; border-color: #536f5b; background: #29382f; }
+.archer-option:hover { border-color: #79b58a; }
+.archer-option .choice-skills { color: #9cd0a5; }
+.class-select-note { margin-top: 17px; color: #818797; font: 8px 'DM Mono', monospace; letter-spacing: .04em; }
+
+@keyframes playerAura {
+  0%, 100% { opacity: .48; transform: translateX(-50%) scale(.9); }
+  50% { opacity: .9; transform: translateX(-50%) scale(1.12); }
+}
+@keyframes player-knight-attack {
+  0%, 100% { transform: translateX(-50%) translateY(0) rotate(0); }
+  34% { transform: translateX(calc(-50% + 45px)) translateY(-7px) rotate(9deg); }
+  58% { transform: translateX(calc(-50% + 30px)) translateY(0) rotate(-5deg); }
+}
+@keyframes player-mage-attack {
+  0%, 100% { filter: drop-shadow(0 8px 8px #0008); }
+  32%, 62% { filter: drop-shadow(0 0 22px #c39af7) brightness(1.35); }
+}
+@keyframes player-archer-attack {
+  0%, 100% { transform: translateX(-50%) rotate(0); }
+  35% { transform: translateX(calc(-50% + 13px)) rotate(-12deg); }
+  60% { transform: translateX(calc(-50% + 8px)) rotate(7deg); }
+}
+@keyframes player-hit {
+  0%, 100% { filter: brightness(1); }
+  30% { filter: brightness(2) sepia(.35); transform: translateX(calc(-50% - 9px)); }
+  65% { transform: translateX(calc(-50% + 6px)); }
+}
+.player-knight-attack { animation: player-knight-attack .42s ease-out; }
+.player-mage-attack { animation: player-mage-attack .5s ease-out; }
+.player-archer-attack { animation: player-archer-attack .42s ease-out; }
+.player-hit { animation: player-hit .34s ease-out; }
+
+@media (min-width: 1101px) {
+  .battle-panel { min-width: 0; }
+}
+@media (max-width: 1100px) {
+  .arena { height: 420px; }
+  .battle-menu { width: min(58%, 430px); }
+}
+@media (max-width: 720px) {
+  .arena { height: 405px; }
+  .enemy-wrap { left: 71%; top: 40px; transform: translateX(-50%) scale(.9); }
+  .enemy-wrap.boss { transform: translateX(-50%) scale(1.02); }
+  .player-combatant { left: 24%; bottom: 118px; transform: translateX(-50%) scale(.88); }
+  .battle-menu {
+    right: 8px;
+    bottom: 8px;
+    width: 59%;
+    max-height: 52%;
+    padding: 7px;
+  }
+  .command-tabs { gap: 3px; }
+  .command-tab { min-height: 44px; padding: 4px 2px; font-size: 8px; }
+  .battle-menu .action-card { min-height: 40px; padding: 5px 6px; gap: 6px; }
+  .battle-menu .action-icon { width: 24px; height: 24px; }
+  .battle-menu .action-copy small { font-size: 7px; }
+  .class-select { padding: 24px 18px; }
+}
+@media (max-width: 480px) {
+  .arena { height: 390px; }
+  .moon { right: 13%; top: 35px; }
+  .enemy-wrap { left: 72%; top: 40px; transform: translateX(-50%) scale(.78); }
+  .enemy-wrap.boss { transform: translateX(-50%) scale(.92); }
+  .player-combatant { left: 23%; bottom: 114px; transform: translateX(-50%) scale(.75); }
+  .arena-label { top: 9px; left: 9px; right: 9px; font-size: 7px; }
+  .enemy-tag { font-size: 8px; }
+  .battle-menu { width: 62%; max-height: 58%; }
+  .command-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .battle-menu .action-head { font-size: 7px; }
+  .battle-menu .action-copy small { max-width: 145px; }
+  .class-options { grid-template-columns: 1fr; gap: 8px; }
+  .class-option { min-height: 0; display: grid; grid-template-columns: 42px minmax(0, 1fr); grid-template-rows: auto auto auto; column-gap: 11px; padding: 11px 13px; text-align: left; }
+  .choice-icon { grid-row: 1 / 4; width: 40px; height: 40px; margin: 0; }
+  .class-option strong { align-self: end; font-size: 16px; }
+  .class-option small, .choice-skills { margin-top: 3px; }
+  .class-option small { font-size: 8px; }
+  .class-select h2 { font-size: 26px; }
+  .class-select > p { margin-bottom: 15px; font-size: 10px; }
+}
+@media (max-width: 350px) {
+  .arena { height: 374px; }
+  .battle-menu { width: 65%; right: 6px; bottom: 6px; padding: 6px; }
+  .player-combatant { left: 21%; transform: translateX(-50%) scale(.66); }
+  .enemy-wrap { left: 73%; transform: translateX(-50%) scale(.68); }
+  .enemy-wrap.boss { transform: translateX(-50%) scale(.82); }
+  .battle-menu .action-copy small { display: none; }
+  .battle-menu .action-card { min-height: 36px; }
+  .class-select { padding: 21px 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .player-aura, .player-knight-attack, .player-mage-attack, .player-archer-attack, .player-hit { animation-duration: .01ms; }
+}
