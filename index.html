@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#10131e">
+  <title>Emberfall — The Endless Spire</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand"><div class="brand-mark">✦</div><div><div class="brand-name">EMBERFALL</div><div class="brand-sub">THE ENDLESS SPIRE</div></div></div>
+      <div class="top-meta"><div class="top-pill">◈ <span>Floor</span> <strong id="floorTop">01</strong></div><div class="top-pill">◉ <span>Gold</span> <strong id="goldTop">25</strong></div><button class="sound-button" id="soundBtn" aria-label="Toggle sound">♫</button></div>
+    </header>
+    <div class="intro"><div><div class="eyebrow">A journey without an end</div><h1>Climb the <em>Endless Spire.</em></h1><p>One more floor. One more fight. How far will your legend rise?</p></div><div class="run-stats"><span><i class="status-dot"></i> RUN IN PROGRESS</span><strong id="runRecord">BEST: FLOOR 01</strong></div></div>
+    <section class="game-layout" aria-label="Tower adventure">
+      <aside class="hero-panel panel">
+        <div class="panel-kicker">YOUR ADVENTURER <span class="level-badge" id="level">LVL 01</span></div>
+        <div class="hero-art"><div class="art-glow"></div><div class="hero-sigil">✦</div><div class="hero-figure"><div class="hero-head"></div><div class="hero-cape"></div><div class="hero-body"></div><div class="hero-blade">╱</div></div><div class="art-caption">THE WAYFARER</div></div>
+        <div class="hero-name-row"><div><h2>Arden Vale</h2><span class="hero-class">Wandering Knight</span></div><span class="class-icon">⚔</span></div>
+        <div class="vitals"><div class="vital-head"><span>❤️ VITALITY</span><strong id="hpText">100 / 100</strong></div><div class="bar"><div class="bar-fill hp-fill" id="hpBar"></div></div></div>
+        <div class="vitals mana-vital"><div class="vital-head"><span>✦ FOCUS</span><strong id="mpText">40 / 40</strong></div><div class="bar"><div class="bar-fill mp-fill" id="mpBar"></div></div></div>
+        <div class="hero-details"><div><span>POWER</span><strong id="powerText">12</strong></div><div><span>ARMOR</span><strong id="armorText">0</strong></div><div><span>XP</span><strong id="xpText">0 / 40</strong></div></div>
+        <div class="inventory"><div class="inventory-title">PACK <span>CONSUMABLES</span></div><div class="item-row"><span class="item-icon potion">♜</span><span>Health potion</span><strong id="potionCount">× 3</strong></div><div class="item-row"><span class="item-icon ether">✧</span><span>Focus tonic</span><strong id="etherCount">× 1</strong></div></div>
+      </aside>
+      <section class="battle-panel panel">
+        <div class="battle-heading"><div><div class="panel-kicker" id="phaseLabel">FLOOR 01 · ENCOUNTER</div><h2 id="battleTitle">A shadow stirs...</h2></div><div class="turn-badge" id="turnBadge"><span class="turn-dot"></span> YOUR TURN</div></div>
+        <div class="arena" id="arena"><div class="arena-vignette"></div><div class="moon"></div><div class="spire spire-back">◆</div><div class="spire spire-mid">◆</div><div class="spire spire-front">◆</div><div class="arena-floor"></div><div class="enemy-wrap" id="enemyWrap"><div class="enemy-aura"></div><div class="enemy-emoji" id="enemyEmoji">👾</div><div class="enemy-shadow"></div></div><div class="arena-label"><span class="enemy-tag"><i></i><span id="enemyName">Cinder Wisp</span></span><span id="enemyRank">FLOOR GUARDIAN</span></div><div class="float-layer" id="floatLayer"></div></div>
+        <div class="enemy-vitals"><div class="enemy-vital-head"><span id="enemyTitle">CINDER WISP</span><strong id="enemyHpText">48 / 48</strong></div><div class="bar enemy-bar"><div class="bar-fill enemy-fill" id="enemyHpBar"></div></div></div>
+        <div class="intent-row" id="intentRow"><span class="intent-icon">⚠</span><span id="intentText">The wisp gathers heat...</span><span class="intent-label">ENEMY INTENT</span></div>
+        <div class="action-head"><span>CHOOSE YOUR ACTION</span><span id="actionHint">A turn is yours.</span></div>
+        <div class="actions" id="actions">
+          <button class="action-card primary-action" data-action="attack"><span class="action-icon">⚔</span><span class="action-copy"><strong>Strike</strong><small>Reliable weapon attack</small></span><span class="action-cost">FREE</span></button>
+          <button class="action-card" data-action="crescent"><span class="action-icon purple-icon">☽</span><span class="action-copy"><strong>Crescent slash</strong><small>Heavy arc of steel</small></span><span class="action-cost">4 FP</span></button>
+          <button class="action-card" data-action="ember"><span class="action-icon orange-icon">♨</span><span class="action-copy"><strong>Ember burst</strong><small>Fire damage · may burn</small></span><span class="action-cost">8 FP</span></button>
+          <button class="action-card" data-action="mend"><span class="action-icon green-icon">✚</span><span class="action-copy"><strong>Field mend</strong><small>Restore your vitality</small></span><span class="action-cost">10 FP</span></button>
+          <button class="action-card utility-action" data-action="potion"><span class="action-icon red-icon">♜</span><span class="action-copy"><strong>Use potion</strong><small>Restore 40 vitality</small></span><span class="action-cost" id="potionCost">× 3</span></button>
+          <button class="action-card utility-action" data-action="ether"><span class="action-icon purple-icon">✧</span><span class="action-copy"><strong>Focus tonic</strong><small>Restore 20 focus</small></span><span class="action-cost" id="etherCost">× 1</span></button>
+          <button class="action-card utility-action" data-action="guard"><span class="action-icon blue-icon">⬡</span><span class="action-copy"><strong>Brace</strong><small>Reduce next hit by half</small></span><span class="action-cost">FREE</span></button>
+        </div>
+        <div class="battle-log" aria-live="polite"><span class="log-mark">✦</span><span id="logText">A Cinder Wisp blocks the path. What will you do?</span></div>
+      </section>
+      <aside class="right-rail">
+        <section class="tower-card panel"><div class="panel-kicker">THE CLIMB</div><div class="tower-display"><div class="tower-line"></div><div class="tower-glow"></div><div class="tower-icon">♜</div><div><strong id="towerFloor">01</strong><span>FLOOR</span></div></div><div class="tower-progress"><span>YOUR ASCENT</span><strong id="progressText">1 floor cleared</strong></div><div class="progress-track"><i id="progressBar"></i></div><div class="tower-note">Every fifth floor, a <b>tower sentinel</b> awaits.</div></section>
+        <section class="journal-card panel"><div class="panel-kicker">FIELD JOURNAL <span class="live-label"><i></i> LIVE</span></div><div class="journal-list" id="journal"><div class="journal-item current"><span>01</span><div><strong>The Spire's threshold</strong><small>Where the ascent begins</small></div><i>●</i></div><div class="journal-item locked"><span>02</span><div><strong>Unknown heights</strong><small>Keep climbing to reveal</small></div><i>◌</i></div><div class="journal-item locked"><span>03</span><div><strong>Unknown heights</strong><small>Keep climbing to reveal</small></div><i>◌</i></div></div><div class="journal-foot">A new page every 5 floors</div></section>
+        <div class="quote-card"><span>“The summit is a story<br>you write one step at a time.”</span><i>— TOWER KEEPER</i></div>
+      </aside>
+    </section>
+    <footer><span>EMBERFALL <b>·</b> A NEVER-ENDING TALE</span><button id="resetBtn">↻ Start a new run</button><span>BEST FLOOR SAVED LOCALLY</span></footer>
+  </main>
+  <div class="modal-backdrop hidden" id="shopModal" role="dialog" aria-modal="true" aria-labelledby="shopTitle"><div class="shop-modal panel"><div class="shop-top"><div class="shop-emblem">♙</div></div><div class="panel-kicker">BETWEEN FLOORS · SAFE HAVEN</div><h2 id="shopTitle">The Lantern &amp; Latch</h2><p class="shop-intro">“Catch your breath, brave one. The stairs aren't going anywhere.”</p><div class="shop-gold">◉ &nbsp;<span id="shopGold">25</span> gold in your purse</div><div class="shop-items" id="shopItems"></div><button class="continue-btn" id="continueBtn">Continue to floor 02 <span>→</span></button><div class="shop-small">Your health and focus are restored when you ascend.</div></div></div>
+  <div class="modal-backdrop hidden" id="gameOverModal" role="dialog" aria-modal="true" aria-labelledby="overTitle"><div class="over-modal panel"><div class="over-icon">✦</div><div class="panel-kicker">THE SPIRE CLAIMS ANOTHER</div><h2 id="overTitle">Your tale pauses here.</h2><p id="overCopy">You reached floor 1. The tower remembers your courage.</p><div class="over-record"><span>FLOORS CLIMBED</span><strong id="finalFloor">01</strong></div><button class="continue-btn" id="retryBtn">Rise again <span>↻</span></button></div></div>
+  <script src="game.js"></script>
+</body>
+</html>
