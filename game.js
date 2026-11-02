@@ -75,6 +75,16 @@
     log(isBoss ? `${template.name} guards the stairs. Choose your opening move.` : `A ${template.name} blocks the path. What will you do?`);
     render();
   }
+  function renderShopStatus() {
+    const hpPct = Math.max(0, Math.min(100, state.hp / state.maxHp * 100));
+    const mpPct = Math.max(0, Math.min(100, state.mp / state.maxMp * 100));
+    setText('shopHpText', `${state.hp} / ${state.maxHp}`);
+    setText('shopMpText', `${state.mp} / ${state.maxMp}`);
+    $('shopHpBar').style.width = `${hpPct}%`;
+    $('shopMpBar').style.width = `${mpPct}%`;
+    setText('shopPotionCount', `× ${state.potions}`);
+    setText('shopEtherCount', `× ${state.ethers}`);
+  }
   function renderSkillActions() {
     $('actions').querySelectorAll('.learned-skill').forEach(button => button.remove());
     state.learnedSkills.forEach(id => {
@@ -104,12 +114,7 @@
     setText('etherCount', `× ${state.ethers}`);
     setText('potionCost', `× ${state.potions}`);
     setText('etherCost', `× ${state.ethers}`);
-    setText('shopHpText', `${state.hp} / ${state.maxHp}`);
-    setText('shopMpText', `${state.mp} / ${state.maxMp}`);
-    $('shopHpBar').style.width = `${hpPct}%`;
-    $('shopMpBar').style.width = `${mpPct}%`;
-    setText('shopPotionCount', `× ${state.potions}`);
-    setText('shopEtherCount', `× ${state.ethers}`);
+    renderShopStatus();
     setText('goldTop', state.gold);
     setText('floorTop', String(state.floor).padStart(2, '0'));
     setText('towerFloor', String(state.floor).padStart(2, '0'));
@@ -244,6 +249,7 @@
     renderShop(); render();
   }
   function renderShop() {
+    renderShopStatus();
     setText('shopGold', state.gold);
     $('shopItems').innerHTML = shopGoods.map(item => `<div class="shop-item"><span class="shop-item-icon">${item.icon}</span><div class="shop-item-copy"><strong>${item.name}</strong><small>${item.info}</small></div><button class="buy-btn" data-buy="${item.id}" ${state.gold < item.price || (item.id === 'heal' && state.hp >= state.maxHp) ? 'disabled' : ''}>◉ ${item.price}</button></div>`).join('');
     $('shopItems').querySelectorAll('[data-buy]').forEach(button => button.addEventListener('click', () => buy(button.dataset.buy)));
