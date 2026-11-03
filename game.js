@@ -18,7 +18,11 @@
     ember: { name: 'Ember Burst', icon: '♨', cost: 8, info: 'Blast the foe with flame and inflict burn.', classId: 'mage', damage: 1.45, bonus: 10, burn: 2 },
     mend: { name: 'Field Mend', icon: '✚', cost: 10, info: 'Restore up to 32 vitality.', classId: 'mage', heal: 32 },
     aimed: { name: 'Aimed Shot', icon: '➶', cost: 4, info: 'A precise, armor-piercing shot.', classId: 'archer', damage: 2.05, bonus: 3 },
-    volley: { name: 'Rain of Arrows', icon: '✣', cost: 8, info: 'Loose a swift flurry of arrows.', classId: 'archer', damage: 1.7, bonus: 8 }
+    volley: { name: 'Rain of Arrows', icon: '✣', cost: 8, info: 'Loose a swift flurry of arrows.', classId: 'archer', damage: 1.7, bonus: 8 },
+    frost: { name: 'Frost Lance', icon: '❄', cost: 7, info: 'Ice damage weakens the enemy’s next attacks.', classId: 'any', damage: 1.15, bonus: 5, chill: 2 },
+    venom: { name: 'Venom Thorn', icon: '☠', cost: 6, info: 'Nature damage poisons the foe over time.', classId: 'any', damage: 1.05, bonus: 3, poison: 3 },
+    hex: { name: 'Confounding Hex', icon: '☯', cost: 8, info: 'Arcane damage may disrupt the foe’s turn.', classId: 'any', damage: .9, bonus: 2, confuse: 2 },
+    lull: { name: 'Lullaby Sigil', icon: '☾', cost: 9, info: 'Put the foe to sleep, delaying its next turn.', classId: 'any', damage: .5, bonus: 0, sleep: 1 }
   };
   const skillBooks = [
     { id: 'starfall', classId: 'mage', name: 'Starfall', icon: '☄', price: 38, cost: 9, info: 'Call down a shard of the night sky for heavy damage.', damage: 1.9, bonus: 16, title: 'STARFALL' },
@@ -36,7 +40,22 @@
     { id: 'armor', icon: '⬡', name: 'Wayfarer’s charm', info: 'Permanently gain +1 armor', price: 22 },
     { id: 'heal', icon: '✚', name: 'Warm meal', info: 'Restore 35 vitality now', price: 14 }
   ];
-  const freshState = () => ({ classId: null, floor: 1, hp: 100, maxHp: 100, mp: 40, maxMp: 40, power: 12, armor: 0, potions: 3, ethers: 1, gold: 25, xp: 0, level: 1, cleared: 0, enemy: null, enemyHp: 0, enemyMax: 0, burn: 0, guarding: false, learnedSkills: [], phase: 'battle', busy: false, menu: 'fight' });
+  const achievementDefs = [
+    { id: 'first-blood', name: 'First Blood', note: 'Win your first encounter', reward: 3 },
+    { id: 'sentinel', name: 'Sentinel Breaker', note: 'Defeat a tower sentinel', reward: 5 },
+    { id: 'veteran', name: 'Seasoned Climber', note: 'Reach level 3', reward: 5 },
+    { id: 'phoenix', name: 'From the Ashes', note: 'Revive a fallen companion', reward: 4 },
+    { id: 'elements', name: 'Elemental Adept', note: 'Use an elemental or control skill', reward: 3 }
+  ];
+  const boonDefs = [
+    { id: 'vitality', name: 'Stalwart Heart', info: '+15 maximum vitality each run', price: 5 },
+    { id: 'focus', name: 'Deep Well', info: '+8 maximum focus each run', price: 5 },
+    { id: 'phoenix', name: 'Phoenix Kit', info: 'Begin each run with one revive kit', price: 7 }
+  ];
+  const loadLegacy = () => { try { return JSON.parse(localStorage.getItem('emberfall-legacy') || '{"shards":0,"achievements":[],"boons":[]}'); } catch (_) { return { shards: 0, achievements: [], boons: [] }; } };
+  let legacy = loadLegacy();
+  const saveLegacy = () => localStorage.setItem('emberfall-legacy', JSON.stringify(legacy));
+  const freshState = () => ({ classId: null, floor: 1, hp: 100, maxHp: 100, mp: 40, maxMp: 40, power: 12, armor: 0, potions: 3, ethers: 1, kits: 1, gold: 25, xp: 0, level: 1, cleared: 0, runShards: 0, enemy: null, enemyHp: 0, enemyMax: 0, burn: 0, poison: 0, chill: 0, confuse: 0, sleep: 0, guarding: -1, party: [], acted: [], learnedSkills: [], phase: 'battle', busy: false, menu: 'fight' });
   let state = freshState();
   let soundOn = false;
   let audio;
@@ -45,6 +64,28 @@
   $('runRecord').textContent = `BEST: FLOOR ${String(best).padStart(2, '0')}`;
 
   function setText(id, text) { $(id).textContent = text; }
+  function renderLegacy() {
+    setText('shardCount', legacy.shards);
+    setText('startShards', legacy.shards);
+    setText('achievementCount', `${legacy.achievements.length} / ${achievementDefs.length}`);
+    $('achievementList').innerHTML = achievementDefs.map(item => `<div class="achievement${legacy.achievements.includes(item.id) ? ' earned' : ''}"><span>${legacy.achievements.includes(item.id) ? '✦' : '◇'}</span><div><strong>${item.name}</strong><small>${item.note}</small></div></div>`).join('');
+    $('boonList').innerHTML = boonDefs.map(item => {
+      const owned = legacy.boons.includes(item.id);
+      return `<button class="boon-option${owned ? ' owned' : ''}" data-boon="${item.id}" ${owned || legacy.shards < item.price ? 'disabled' : ''}><span><strong>${item.name}</strong><small>${item.info}</small></span><b>${owned ? 'OWNED' : `✧ ${item.price}`}</b></button>`;
+    }).join('');
+    $('boonList').querySelectorAll('[data-boon]').forEach(button => button.addEventListener('click', () => buyBoon(button.dataset.boon)));
+  }
+  function buyBoon(id) {
+    const boon = boonDefs.find(item => item.id === id);
+    if (!boon || legacy.boons.includes(id) || legacy.shards < boon.price) return;
+    legacy.shards -= boon.price; legacy.boons.push(id); saveLegacy(); renderLegacy();
+  }
+  function unlockAchievement(id) {
+    const item = achievementDefs.find(entry => entry.id === id);
+    if (!item || legacy.achievements.includes(id)) return;
+    legacy.achievements.push(id); legacy.shards += item.reward; saveLegacy(); renderLegacy();
+    log(`Achievement unlocked: ${item.name}. +${item.reward} spirit shards.`);
+  }
   function log(message) { setText('logText', message); }
   function showFloat(text, kind = 'damage', player = false) {
     const el = document.createElement('span');
@@ -73,7 +114,12 @@
     state.enemyMax = Math.round(template.hp * scale);
     state.enemyHp = state.enemyMax;
     state.burn = 0;
-    state.guarding = false;
+    state.poison = 0;
+    state.chill = 0;
+    state.confuse = 0;
+    state.sleep = 0;
+    state.acted = [];
+    state.guarding = -1;
     $('enemyWrap').classList.toggle('boss', isBoss);
     $('enemyWrap').dataset.skin = template.skin;
     $('enemyEmoji').textContent = template.emoji;
@@ -90,6 +136,22 @@
     log(isBoss ? `${template.name} guards the stairs. Choose your opening move.` : `A ${template.name} blocks the path. What will you do?`);
     render();
   }
+  function activeActorIndex() {
+    return state.party.findIndex((member, index) => member.hp > 0 && !state.acted.includes(index));
+  }
+  function renderParty() {
+    if (!state.party.length) { $('partyRoster').innerHTML = ''; return; }
+    state.party[0].hp = state.hp;
+    state.party[0].maxHp = state.maxHp;
+    state.party[0].power = state.power;
+    state.party[0].armor = state.armor;
+    const active = activeActorIndex();
+    $('partyRoster').innerHTML = `<div class="party-turn-label">PARTY TURN <span>${Math.max(0, active) + 1} / ${state.party.filter(member => member.hp > 0).length}</span></div>` + state.party.map((member, index) => {
+      const pct = Math.max(0, member.hp / member.maxHp * 100);
+      const tags = [index === active ? 'ACTING' : '', member.hp <= 0 ? 'DOWN' : '', index === state.guarding ? 'GUARD' : ''].filter(Boolean).join(' · ');
+      return `<div class="party-member${index === active ? ' acting' : ''}${member.hp <= 0 ? ' down' : ''}"><span class="party-icon">${member.icon}</span><div class="party-copy"><strong>${member.name}</strong><small>${member.role}${tags ? ` · ${tags}` : ''}</small><i><b style="width:${pct}%"></b></i></div><em>${Math.max(0, member.hp)}/${member.maxHp}</em></div>`;
+    }).join('');
+  }
   function renderShopStatus() {
     const hpPct = Math.max(0, Math.min(100, state.hp / state.maxHp * 100));
     const mpPct = Math.max(0, Math.min(100, state.mp / state.maxMp * 100));
@@ -103,7 +165,7 @@
   function renderSkillActions() {
     $('actions').querySelectorAll('.class-skill, .learned-skill').forEach(button => button.remove());
     const classProfile = classes[state.classId];
-    (classProfile?.skills || []).forEach(id => {
+    (classProfile?.skills || []).concat(['frost', 'venom', 'hex', 'lull']).forEach(id => {
       const skill = classSkills[id];
       if (!skill) return;
       const button = document.createElement('button');
@@ -138,10 +200,19 @@
     const profile = classes[classId];
     if (!profile || state.classId) return;
     state.classId = classId;
-    state.maxHp = state.hp = profile.hp;
-    state.maxMp = state.mp = profile.mp;
+    state.maxHp = profile.hp + (legacy.boons.includes('vitality') ? 15 : 0);
+    state.hp = state.maxHp;
+    state.maxMp = profile.mp + (legacy.boons.includes('focus') ? 8 : 0);
+    state.mp = state.maxMp;
     state.power = profile.power;
     state.armor = profile.armor;
+    state.kits = legacy.boons.includes('phoenix') ? 1 : 0;
+    state.party = [
+      { name: profile.hero, role: profile.name, icon: profile.icon, maxHp: state.maxHp, hp: state.hp, power: state.power, armor: state.armor },
+      { name: 'Bram Ironwood', role: 'Vanguard', icon: '⬡', maxHp: 76, hp: 76, power: Math.round(state.power * .78), armor: 2 },
+      { name: 'Nyx Quickstep', role: 'Skirmisher', icon: '➶', maxHp: 62, hp: 62, power: Math.round(state.power * .88), armor: 0 }
+    ];
+    state.acted = [];
     $('classSelect').classList.add('hidden');
     $('playerCombatant').dataset.class = classId;
     document.body.dataset.heroClass = classId;
@@ -155,6 +226,7 @@
   }
   function render() {
     renderSkillActions();
+    renderParty();
     const hpPct = Math.max(0, state.hp / state.maxHp * 100);
     const mpPct = Math.max(0, state.mp / state.maxMp * 100);
     const enemyPct = Math.max(0, state.enemyHp / state.enemyMax * 100);
@@ -170,6 +242,7 @@
     setText('etherCount', `× ${state.ethers}`);
     setText('potionCost', `× ${state.potions}`);
     setText('etherCost', `× ${state.ethers}`);
+    setText('kitCount', `× ${state.kits}`);
     renderShopStatus();
     setText('goldTop', state.gold);
     setText('floorTop', String(state.floor).padStart(2, '0'));
@@ -183,7 +256,11 @@
       const skill = action.startsWith('skill:') ? skillBooks.find(book => book.id === action.slice(6)) : null;
       const classSkill = classSkills[action];
       const cost = classSkill?.cost || skill?.cost || 0;
-      button.disabled = !state.classId || state.phase !== 'battle' || state.busy || state.hp <= 0 || state.enemyHp <= 0 || state.mp < cost || (action === 'potion' && (state.potions <= 0 || state.hp === state.maxHp)) || (action === 'ether' && (state.ethers <= 0 || state.mp === state.maxMp)) || ((classSkill?.heal || skill?.heal) && state.hp === state.maxHp);
+      const actorIndex = activeActorIndex();
+      const actor = state.party[actorIndex];
+      const anyDown = state.party.some(member => member.hp <= 0);
+      const heals = classSkill?.heal || skill?.heal;
+      button.disabled = !state.classId || state.phase !== 'battle' || state.busy || actorIndex < 0 || state.enemyHp <= 0 || state.mp < cost || ((classSkill || skill) && actorIndex !== 0) || (action === 'potion' && (!state.potions || !actor || actor.hp >= actor.maxHp)) || (action === 'ether' && (!state.ethers || state.mp >= state.maxMp)) || (action === 'phoenix' && (!state.kits || !anyDown)) || (heals && (actorIndex !== 0 || state.hp >= state.maxHp));
     });
   }
   function enemyTurn() {
@@ -195,36 +272,58 @@
     render();
     actionTimer = window.setTimeout(() => {
       if (state.phase !== 'battle') return;
-      let damage = Math.max(1, Math.round(state.enemy.attack * (1 + (state.floor - 1) * .075)) - state.armor);
-      const heavy = Math.random() < .22;
-      if (heavy) damage = Math.round(damage * 1.55);
-      if (state.guarding) { damage = Math.max(1, Math.ceil(damage / 2)); state.guarding = false; }
-      state.hp = Math.max(0, state.hp - damage);
-      showFloat(`−${damage}`, 'damage', true);
-      $('enemyWrap').classList.remove('hit');
-      log(`${state.enemy.name} ${heavy ? 'unleashes a heavy strike' : 'strikes'} for ${damage} damage${state.armor ? ` (${state.armor} absorbed)` : ''}.`);
-      beep(heavy ? 105 : 155, .1);
-      let burnDamage = 0;
-      if (state.burn > 0 && state.enemyHp > 0) {
-        burnDamage = Math.min(5, state.enemyHp);
-        state.enemyHp = Math.max(0, state.enemyHp - burnDamage);
-        state.burn--;
-        showFloat(`−${burnDamage} burn`);
+      const alive = state.party.map((member, index) => ({ member, index })).filter(row => row.member.hp > 0);
+      if (!alive.length) { gameOver(); return; }
+      let turnText = '';
+      if (state.sleep > 0) {
+        state.sleep--;
+        turnText = `${state.enemy.name} sleeps through its turn.`;
+      } else if (state.confuse > 0 && Math.random() < .5) {
+        const selfDamage = Math.min(state.enemyHp, Math.max(1, Math.round(state.enemy.attack * .7)));
+        state.enemyHp -= selfDamage;
+        turnText = `${state.enemy.name} is confused and strikes itself for ${selfDamage}.`;
+        showFloat(`−${selfDamage} confusion`);
+      } else {
+        const target = alive[Math.floor(Math.random() * alive.length)];
+        const armor = target.member.armor || 0;
+        let damage = Math.max(1, Math.round(state.enemy.attack * (1 + (state.floor - 1) * .075)) - armor);
+        const heavy = Math.random() < .22;
+        if (heavy) damage = Math.round(damage * 1.55);
+        if (state.chill > 0) { damage = Math.max(1, Math.ceil(damage * .65)); turnText += ' Chilled, its blow is weakened.'; }
+        if (target.index === state.guarding) { damage = Math.max(1, Math.ceil(damage / 2)); state.guarding = -1; }
+        target.member.hp = Math.max(0, target.member.hp - damage);
+        if (target.index === 0) state.hp = target.member.hp;
+        showFloat(`−${damage}`, 'damage', target.index === 0);
+        if (target.index === 0) animatePlayer('', true);
+        turnText = `${state.enemy.name} ${heavy ? 'unleashes a heavy strike' : 'strikes'} ${target.member.name} for ${damage} damage${armor ? ` (${armor} absorbed)` : ''}.${turnText}`;
+        beep(heavy ? 105 : 155, .1);
+      }
+      if (state.chill > 0) state.chill--;
+      if (state.confuse > 0) state.confuse--;
+      if (state.enemyHp > 0 && state.burn > 0) {
+        const amount = Math.min(5, state.enemyHp); state.enemyHp -= amount; state.burn--;
+        turnText += ` Burn deals ${amount}.`; showFloat(`−${amount} burn`);
+      }
+      if (state.enemyHp > 0 && state.poison > 0) {
+        const amount = Math.min(4, state.enemyHp); state.enemyHp -= amount; state.poison--;
+        turnText += ` Poison deals ${amount}.`; showFloat(`−${amount} poison`);
       }
       const regenHp = state.hp > 0 ? Math.min(2, state.maxHp - state.hp) : 0;
       const regenMp = Math.min(1, state.maxMp - state.mp);
       state.hp += regenHp;
+      if (state.party[0]) state.party[0].hp = state.hp;
       state.mp += regenMp;
       if (regenHp) showFloat(`+${regenHp}`, 'heal', true);
       if (regenMp) showFloat(`+${regenMp} FP`, 'heal', true);
-      log(`${state.enemy.name} ${heavy ? 'unleashes a heavy strike' : 'strikes'} for ${damage} damage${state.armor ? ` (${state.armor} absorbed)` : ''}.${burnDamage ? ` Burn deals ${burnDamage}.` : ''} Turn’s end: +${regenHp} HP, +${regenMp} FP.`);
-      render();
-      if (state.hp <= 0) { gameOver(); return; }
-      if (state.enemyHp <= 0) { victory(); return; }
+      log(`${turnText} Party recovers ${regenHp} HP and ${regenMp} FP.`);
+      if (state.party.every(member => member.hp <= 0)) { render(); gameOver(); return; }
+      if (state.enemyHp <= 0) { render(); victory(); return; }
+      state.acted = [];
       state.busy = false;
       $('turnBadge').classList.remove('enemy-turn');
       $('turnBadge').innerHTML = '<span class="turn-dot"></span> YOUR TURN';
-      setText('intentText', state.burn ? `${state.enemy.name} smolders. ${state.enemy.intent}` : state.enemy.intent);
+      const statuses = [state.burn && `burn ${state.burn}`, state.poison && `poison ${state.poison}`, state.chill && `chill ${state.chill}`, state.confuse && `confused ${state.confuse}`, state.sleep && `asleep ${state.sleep}`].filter(Boolean).join(' · ');
+      setText('intentText', `${statuses ? `[${statuses}] ` : ''}${state.enemy.intent}`);
       render();
     }, 650);
   }
@@ -238,56 +337,73 @@
   }
   function doAction(action) {
     if (state.phase !== 'battle' || state.busy || !state.classId) return;
+    const actorIndex = activeActorIndex();
+    const actor = state.party[actorIndex];
+    if (!actor || actorIndex < 0) return;
     let damage = 0;
     let turnConsumed = false;
     const classSkill = classSkills[action];
     const book = action.startsWith('skill:') ? skillBooks.find(item => item.id === action.slice(6)) : null;
-    if (classSkill) {
-      if (!classes[state.classId].skills.includes(action) || state.mp < classSkill.cost || (classSkill.heal && state.hp >= state.maxHp)) return;
-      state.mp -= classSkill.cost;
-      if (classSkill.heal) {
-        const healed = Math.min(classSkill.heal, state.maxHp - state.hp);
-        state.hp += healed; showFloat(`+${healed}`, 'heal', true);
+    const syncHero = () => { if (actorIndex === 0) state.hp = actor.hp; };
+    const useSkill = (skill, isBook = false) => {
+      if (state.mp < skill.cost || (isBook && !state.learnedSkills.includes(skill.id)) || (!isBook && skill.classId !== 'any' && !classes[state.classId].skills.includes(action))) return false;
+      if (skill.heal && state.hp >= state.maxHp) return false;
+      state.mp -= skill.cost;
+      if (skill.heal) {
+        const healed = Math.min(skill.heal, state.maxHp - state.hp);
+        state.hp += healed; actor.hp = state.hp; showFloat(`+${healed}`, 'heal', true);
       }
-      if (classSkill.guard) state.guarding = true;
-      if (classSkill.burn) state.burn = classSkill.burn;
-      if (classSkill.damage) damage = Math.round(state.power * classSkill.damage + classSkill.bonus + Math.random() * 5);
-      log(`${classSkill.name}: ${classSkill.heal ? 'restores your vitality' : 'strikes for ' + damage + ' damage'}${classSkill.guard ? ' and braces for the next strike' : ''}${classSkill.burn ? ' as the foe catches fire' : ''}.`);
-      beep(classSkill.classId === 'mage' ? 480 : classSkill.classId === 'archer' ? 390 : 340);
-      turnConsumed = true;
-    } else if (book) {
-      if (!state.learnedSkills.includes(book.id) || state.mp < book.cost || (book.heal && state.hp >= state.maxHp)) return;
-      state.mp -= book.cost;
-      if (book.heal) {
-        const healed = Math.min(book.heal, state.maxHp - state.hp);
-        state.hp += healed; showFloat(`+${healed}`, 'heal', true);
-      }
-      if (book.id === 'aegis') state.guarding = true;
-      if (book.damage) damage = Math.round(state.power * book.damage + book.bonus + Math.random() * 7);
-      log(book.heal ? `${book.name} restores your vitality${book.id === 'aegis' ? ' and braces you for the next strike' : ''}.` : `${book.name} strikes for ${damage} damage.`);
-      beep(610); turnConsumed = true;
-    } else {
+      if (skill.guard) state.guarding = actorIndex;
+      if (isBook && skill.id === 'aegis') state.guarding = actorIndex;
+      if (skill.burn) state.burn = Math.max(state.burn, skill.burn);
+      if (skill.poison) state.poison = Math.max(state.poison, skill.poison);
+      if (skill.chill) state.chill = Math.max(state.chill, skill.chill);
+      if (skill.confuse) state.confuse = Math.max(state.confuse, skill.confuse);
+      if (skill.sleep) state.sleep = Math.max(state.sleep, skill.sleep);
+      if (skill.damage) damage = Math.round(state.power * skill.damage + skill.bonus + Math.random() * (isBook ? 7 : 5));
+      if (skill.burn || skill.poison || skill.chill || skill.confuse || skill.sleep) unlockAchievement('elements');
+      const effects = [skill.burn && 'burns the foe', skill.poison && 'poisons the foe', skill.chill && 'chills the foe', skill.confuse && 'confuses the foe', skill.sleep && 'puts the foe to sleep', skill.guard && 'braces for the next strike'].filter(Boolean).join(' and ');
+      log(skill.heal ? `${skill.name} restores your vitality${effects ? ` and ${effects}` : ''}.` : `${skill.name} ${skill.damage ? `strikes for ${damage} damage` : 'takes effect'}${effects ? ` and ${effects}` : ''}.`);
+      beep(isBook ? 610 : skill.classId === 'mage' ? 480 : skill.classId === 'archer' ? 390 : 340);
+      return true;
+    };
+    if (classSkill) turnConsumed = useSkill(classSkill);
+    else if (book) turnConsumed = useSkill(book, true);
+    else {
       switch (action) {
         case 'attack':
-          damage = state.power + Math.floor(Math.random() * 5);
-          log(`You strike true, dealing ${damage} damage.`); turnConsumed = true; break;
+          damage = actor.power + Math.floor(Math.random() * 5);
+          log(`${actor.name} strikes true, dealing ${damage} damage.`); turnConsumed = true; break;
         case 'potion': {
-          if (!state.potions || state.hp >= state.maxHp) return;
+          if (!state.potions || actor.hp >= actor.maxHp) return;
           state.potions--;
-          const healed = Math.min(40, state.maxHp - state.hp); state.hp += healed;
-          showFloat(`+${healed}`, 'heal', true); log(`You drink a health potion and recover ${healed} vitality.`); beep(520); turnConsumed = true; break;
+          const healed = Math.min(40, actor.maxHp - actor.hp); actor.hp += healed; syncHero();
+          showFloat(`+${healed}`, 'heal', actorIndex === 0); log(`${actor.name} drinks a health potion and recovers ${healed} vitality.`); beep(520); turnConsumed = true; break;
         }
         case 'ether': {
           if (!state.ethers || state.mp >= state.maxMp) return;
           state.ethers--;
           const restored = Math.min(20, state.maxMp - state.mp); state.mp += restored;
-          showFloat(`+${restored} FP`, 'heal', true); log(`The focus tonic restores ${restored} focus.`); beep(440); turnConsumed = true; break;
+          showFloat(`+${restored} FP`, 'heal', true); log(`${actor.name} uses a focus tonic; it restores ${restored} focus.`); beep(440); turnConsumed = true; break;
+        }
+        case 'phoenix': {
+          const fallen = state.party.findIndex(member => member.hp <= 0);
+          if (!state.kits || fallen < 0) return;
+          const revived = state.party[fallen];
+          state.kits--;
+          revived.hp = Math.max(1, Math.ceil(revived.maxHp * .4));
+          if (fallen === 0) state.hp = revived.hp;
+          showFloat(`+${revived.hp}`, 'heal', fallen === 0);
+          unlockAchievement('phoenix');
+          log(`${actor.name} uses a Phoenix Kit to revive ${revived.name} with ${revived.hp} vitality.`);
+          beep(720); turnConsumed = true; break;
         }
         case 'guard':
-          state.guarding = true; log('You brace behind your guard. The next hit will deal half damage.'); beep(180); turnConsumed = true; break;
+          state.guarding = actorIndex; log(`${actor.name} braces behind a guard. The next hit will deal half damage.`); beep(180); turnConsumed = true; break;
       }
     }
     if (!turnConsumed) return;
+    if (classSkill?.heal || book?.heal) { actor.hp = state.hp; syncHero(); }
     animatePlayer(action);
     if (damage > 0) {
       state.enemyHp = Math.max(0, state.enemyHp - damage);
@@ -295,26 +411,39 @@
       const wrap = $('enemyWrap'); wrap.classList.remove('hit'); void wrap.offsetWidth; wrap.classList.add('hit');
       beep(260 + Math.min(250, damage * 4));
     }
+    state.acted.push(actorIndex);
     render();
     if (state.enemyHp <= 0) { window.setTimeout(victory, 350); return; }
+    if (activeActorIndex() >= 0) {
+      $('turnBadge').innerHTML = '<span class="turn-dot"></span> YOUR TURN';
+      log(`${actor.name} acts. ${state.party[activeActorIndex()].name} is ready.`);
+      render();
+      return;
+    }
     enemyTurn();
   }
   function victory() {
     if (state.phase !== 'battle') return;
     state.phase = 'shop'; state.busy = false; state.cleared++;
-    const gold = (state.floor % 5 === 0 ? 28 : 12) + Math.floor(Math.random() * 8);
-    const gainedXp = state.floor % 5 === 0 ? 32 : 18;
+    const isSentinel = state.floor % 5 === 0;
+    const gold = (isSentinel ? 28 : 12) + Math.floor(Math.random() * 8);
+    const gainedXp = isSentinel ? 32 : 18;
+    const shardReward = isSentinel ? 3 : 1;
+    state.runShards += shardReward;
     state.gold += gold; state.xp += gainedXp;
+    unlockAchievement('first-blood');
+    if (isSentinel) unlockAchievement('sentinel');
     let leveled = false;
     while (state.xp >= state.level * 40) {
       state.xp -= state.level * 40; state.level++; state.maxHp += 12; state.maxMp += 4; state.power += 2; state.hp = Math.min(state.maxHp, state.hp + 25); state.mp = Math.min(state.maxMp, state.mp + 12); leveled = true;
+      if (state.level >= 3) unlockAchievement('veteran');
     }
     if (state.floor > best) { best = state.floor; localStorage.setItem('emberfall-best', String(best)); setText('runRecord', `BEST: FLOOR ${String(best).padStart(2, '0')}`); }
     $('shopModal').classList.remove('hidden');
     setText('shopTitle', state.floor % 5 === 0 ? 'The Lantern & Latch' : 'The Lantern & Latch');
     setText('shopGold', state.gold);
     $('continueBtn').innerHTML = `Continue to floor ${String(state.floor + 1).padStart(2, '0')} <span>→</span>`;
-    log(`Victory! You earn ${gold} gold and ${gainedXp} XP.${leveled ? ' A new level is yours!' : ''}`);
+    log(`Victory! You earn ${gold} gold, ${gainedXp} XP, and ${shardReward} spirit shard${shardReward === 1 ? '' : 's'} for your legacy.${leveled ? ' A new level is yours!' : ''}`);
     renderShop(); render();
   }
   function renderShop() {
@@ -375,20 +504,35 @@
   function continueClimb() {
     $('shopModal').classList.add('hidden');
     state.floor++;
-    state.hp = Math.min(state.maxHp, state.hp + Math.ceil(state.maxHp * .3));
+    state.party.forEach(member => { member.hp = Math.min(member.maxHp, member.hp + Math.ceil(member.maxHp * .3)); });
+    if (state.party[0]) state.hp = state.party[0].hp;
     state.mp = Math.min(state.maxMp, state.mp + Math.ceil(state.maxMp * .35));
     makeEnemy();
     $('journal').innerHTML = `<div class="journal-item current"><span>${String(Math.ceil(state.floor / 5)).padStart(2, '0')}</span><div><strong>${state.floor % 5 === 0 ? 'The Sentinel’s Stair' : state.floor < 5 ? 'The Spire’s threshold' : 'The endless ascent'}</strong><small>${state.floor % 5 === 0 ? 'A tower sentinel awaits' : `Floor ${String(state.floor).padStart(2, '0')} · onward`}</small></div><i>●</i></div><div class="journal-item"><span>${String(Math.ceil(state.floor / 5) + 1).padStart(2, '0')}</span><div><strong>Unknown heights</strong><small>Keep climbing to reveal</small></div><i>◌</i></div><div class="journal-item locked"><span>✦</span><div><strong>Beyond the known</strong><small>Your story continues</small></div><i>◌</i></div>`;
   }
+  function bankRunShards() {
+    const earned = state.runShards;
+    if (earned > 0) {
+      legacy.shards += earned;
+      state.runShards = 0;
+      saveLegacy();
+      renderLegacy();
+    }
+    return earned;
+  }
   function gameOver() {
+    if (state.phase === 'over') return;
     state.phase = 'over'; state.busy = false;
+    const earned = bankRunShards();
     setText('finalFloor', String(state.floor).padStart(2, '0'));
     setText('overCopy', `You reached floor ${state.floor}. The tower remembers your courage.`);
+    setText('runReward', `Your climb earned ${earned} spirit shard${earned === 1 ? '' : 's'}. Your legacy now holds ${legacy.shards}.`);
     $('gameOverModal').classList.remove('hidden');
-    log('Your strength fails, but your story is not forgotten.'); render();
+    log(`Your strength fails, but your story is not forgotten. ${earned} spirit shards return with you.`); render();
   }
   function reset() {
     if (actionTimer) window.clearTimeout(actionTimer);
+    if (state.classId && state.phase !== 'over') bankRunShards();
     state = freshState();
     $('shopModal').classList.add('hidden'); $('townModal').classList.add('hidden'); $('gameOverModal').classList.add('hidden');
     $('classSelect').classList.remove('hidden');
@@ -415,5 +559,6 @@
   $('retryBtn').addEventListener('click', reset);
   $('resetBtn').addEventListener('click', () => { if (window.confirm('Start a new run? Your current climb will end.')) reset(); });
   $('soundBtn').addEventListener('click', () => { soundOn = !soundOn; $('soundBtn').textContent = soundOn ? '♫' : '♪'; $('soundBtn').classList.toggle('sound-on', soundOn); if (soundOn) beep(440); });
+  renderLegacy();
   makeEnemy();
 })();
